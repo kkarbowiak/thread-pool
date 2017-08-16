@@ -10,6 +10,7 @@
 namespace
 {
     void worker_thread_function(tpool::CommandQueue & command_queue);
+    void stopThreads(std::size_t num_threads, tpool::CommandQueue & command_queue);
 }
 
 namespace tpool
@@ -28,6 +29,8 @@ ThreadPool::ThreadPool(std::size_t num_workers)
 ////////////////////////////////////////////////////////////////////////////////
 ThreadPool::~ThreadPool()
 {
+    stopThreads(mWorkersNumber, mCommandQueue);
+
     delete[] mWorkersArray;
 }
 ////////////////////////////////////////////////////////////////////////////////
@@ -56,6 +59,16 @@ void worker_thread_function(tpool::CommandQueue & command_queue)
         {
             break;
         }
+    }
+}
+////////////////////////////////////////////////////////////////////////////////
+void stopThreads(std::size_t num_threads, tpool::CommandQueue & command_queue)
+{
+    for (std::size_t i = 0; i < num_threads; ++i)
+    {
+        tpool::Command termination_command;
+
+        command_queue.addCommand(std::move(termination_command));
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
