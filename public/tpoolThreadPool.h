@@ -3,12 +3,14 @@
 
 #include "tpoolCommandQueue.h"
 
-#include <thread>
-
 #include <cstddef> // std::size_t
 
 
-namespace tpool { class Job; }
+namespace tpool
+{
+    class Job;
+    class Worker;
+}
 
 namespace tpool
 {
@@ -26,7 +28,7 @@ namespace tpool
 
         private:
             CommandQueue mCommandQueue;
-            std::thread * mWorkersArray;
+            Worker * mWorkersArray;
             std::size_t mWorkersNumber;
     };
 }
