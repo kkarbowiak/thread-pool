@@ -18,7 +18,7 @@ namespace tpool
 ////////////////////////////////////////////////////////////////////////////////
 ThreadPool::ThreadPool(std::size_t num_workers)
     : mCommandQueue(num_workers)
-    , mWorkersArray(new Worker[num_workers])
+    , mWorkers(new Worker[num_workers])
     , mWorkersNumber(num_workers)
 {
     std::size_t started_workers = 0;
@@ -27,14 +27,12 @@ ThreadPool::ThreadPool(std::size_t num_workers)
     {
         for (; started_workers < num_workers; ++started_workers)
         {
-            mWorkersArray[started_workers].start(mCommandQueue);
+            mWorkers[started_workers].start(mCommandQueue);
         }
     }
     catch (std::exception const &)
     {
         stopThreads(started_workers, mCommandQueue);
-
-        delete[] mWorkersArray;
 
         throw;
     }
@@ -43,8 +41,6 @@ ThreadPool::ThreadPool(std::size_t num_workers)
 ThreadPool::~ThreadPool()
 {
     stopThreads(mWorkersNumber, mCommandQueue);
-
-    delete[] mWorkersArray;
 }
 ////////////////////////////////////////////////////////////////////////////////
 void ThreadPool::addJob(std::unique_ptr<Job> job)

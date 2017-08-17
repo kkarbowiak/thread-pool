@@ -3,6 +3,7 @@
 
 #include "tpoolCommandQueue.h"
 
+#include <memory> // std::unique_ptr
 #include <cstddef> // std::size_t
 
 
@@ -28,7 +29,7 @@ namespace tpool
 
         private:
             CommandQueue mCommandQueue;
-            Worker * mWorkersArray;
+            std::unique_ptr<Worker[]> mWorkers;
             std::size_t mWorkersNumber;
     };
 }
