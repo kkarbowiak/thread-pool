@@ -8,11 +8,35 @@
 namespace tpool
 {
 ////////////////////////////////////////////////////////////////////////////////
+CommandQueue::CommandQueue(std::size_t guaranteed_capacity)
+    : mCommands()
+    , mGuaranteed()
+    , mGuaranteedCapacity(guaranteed_capacity)
+    , mMutex()
+    , mCondVar()
+{
+    for (std::size_t i = 0; i < guaranteed_capacity; ++i)
+    {
+        mGuaranteed.push_back(Command());
+    }
+}
+////////////////////////////////////////////////////////////////////////////////
 void CommandQueue::addCommand(Command command)
 {
     std::unique_lock<std::mutex> lock(mMutex);
 
     mCommands.push_back(std::move(command));
+
+    mCondVar.notify_one();
+}
+////////////////////////////////////////////////////////////////////////////////
+void CommandQueue::addCommandGuaranteed(Command command)
+{
+    std::unique_lock<std::mutex> lock(mMutex);
+
+    auto it = mGuaranteed.begin();
+    *it = std::move(command);
+    mCommands.splice(mCommands.end(), mGuaranteed, it);
 
     mCondVar.notify_one();
 }
@@ -27,7 +51,15 @@ Command CommandQueue::getCommand()
     }
 
     Command command = std::move(mCommands.front());
-    mCommands.pop_front();
+    if (mGuaranteed.size() < mGuaranteedCapacity)
+    {
+        auto it = mCommands.begin();
+        mGuaranteed.splice(mGuaranteed.end(), mCommands, it);
+    }
+    else
+    {
+        mCommands.pop_front();
+    }
 
     return command;
 }

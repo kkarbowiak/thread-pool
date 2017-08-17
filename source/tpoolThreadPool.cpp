@@ -17,7 +17,7 @@ namespace tpool
 {
 ////////////////////////////////////////////////////////////////////////////////
 ThreadPool::ThreadPool(std::size_t num_workers)
-    : mCommandQueue()
+    : mCommandQueue(num_workers)
     , mWorkersArray(new Worker[num_workers])
     , mWorkersNumber(num_workers)
 {
@@ -65,7 +65,7 @@ void stopThreads(std::size_t num_threads, tpool::CommandQueue & command_queue)
     {
         tpool::Command termination_command;
 
-        command_queue.addCommand(std::move(termination_command));
+        command_queue.addCommandGuaranteed(std::move(termination_command));
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
