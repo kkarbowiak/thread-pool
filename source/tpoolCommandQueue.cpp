@@ -64,5 +64,23 @@ Command CommandQueue::getCommand()
     return command;
 }
 ////////////////////////////////////////////////////////////////////////////////
+void CommandQueue::clear()
+{
+    std::unique_lock<std::mutex> lock(mMutex);
+
+    while (!mCommands.empty())
+    {
+        if (mGuaranteed.size() < mGuaranteedCapacity)
+        {
+            auto it = mCommands.begin();
+            mGuaranteed.splice(mGuaranteed.end(), mCommands, it);
+        }
+        else
+        {
+            mCommands.pop_front();
+        }
+    }
+}
+////////////////////////////////////////////////////////////////////////////////
 }
 

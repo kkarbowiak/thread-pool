@@ -21,6 +21,8 @@ namespace tpool
 
             Command getCommand();
 
+            void clear();
+
         private:
             std::list<Command> mCommands;
             std::list<Command> mGuaranteed;

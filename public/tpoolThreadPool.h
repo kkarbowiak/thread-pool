@@ -23,6 +23,8 @@ namespace tpool
 
             void addJob(std::unique_ptr<Job> job);
 
+            void clearPendingJobs();
+
         private:
             ThreadPool(ThreadPool const &) = delete;
             ThreadPool & operator=(ThreadPool const &) = delete;
