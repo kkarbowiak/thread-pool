@@ -5,6 +5,7 @@
 #include "tpoolWorker.h"
 
 #include <utility> // std::move()
+#include <exception> // std::exception
 
 
 namespace
@@ -20,9 +21,22 @@ ThreadPool::ThreadPool(std::size_t num_workers)
     , mWorkersArray(new Worker[num_workers])
     , mWorkersNumber(num_workers)
 {
-    for (std::size_t i = 0; i < num_workers; ++i)
+    std::size_t started_workers = 0;
+
+    try
     {
-        mWorkersArray[i].start(mCommandQueue);
+        for (; started_workers < num_workers; ++started_workers)
+        {
+            mWorkersArray[started_workers].start(mCommandQueue);
+        }
+    }
+    catch (std::exception const &)
+    {
+        stopThreads(started_workers, mCommandQueue);
+
+        delete[] mWorkersArray;
+
+        throw;
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
