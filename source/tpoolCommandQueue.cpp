@@ -5,6 +5,11 @@
 #include <utility> // std::move()
 
 
+namespace
+{
+    void discardFrontElement(std::list<tpool::Command> & commands, std::list<tpool::Command> & guaranteed, std::size_t guaranteed_capacity);
+}
+
 namespace tpool
 {
 ////////////////////////////////////////////////////////////////////////////////
@@ -51,15 +56,7 @@ Command CommandQueue::getCommand()
     }
 
     Command command = std::move(mCommands.front());
-    if (mGuaranteed.size() < mGuaranteedCapacity)
-    {
-        auto it = mCommands.begin();
-        mGuaranteed.splice(mGuaranteed.end(), mCommands, it);
-    }
-    else
-    {
-        mCommands.pop_front();
-    }
+    discardFrontElement(mCommands, mGuaranteed, mGuaranteedCapacity);
 
     return command;
 }
@@ -70,15 +67,25 @@ void CommandQueue::clear()
 
     while (!mCommands.empty())
     {
-        if (mGuaranteed.size() < mGuaranteedCapacity)
-        {
-            auto it = mCommands.begin();
-            mGuaranteed.splice(mGuaranteed.end(), mCommands, it);
-        }
-        else
-        {
-            mCommands.pop_front();
-        }
+        discardFrontElement(mCommands, mGuaranteed, mGuaranteedCapacity);
+    }
+}
+////////////////////////////////////////////////////////////////////////////////
+}
+
+namespace
+{
+////////////////////////////////////////////////////////////////////////////////
+void discardFrontElement(std::list<tpool::Command> & commands, std::list<tpool::Command> & guaranteed, std::size_t guaranteed_capacity)
+{
+    if (guaranteed.size() < guaranteed_capacity)
+    {
+        auto it = commands.begin();
+        guaranteed.splice(guaranteed.end(), commands, it);
+    }
+    else
+    {
+        commands.pop_front();
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
