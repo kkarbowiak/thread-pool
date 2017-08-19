@@ -9,7 +9,7 @@
 
 namespace
 {
-    void worker_thread_function(tpool::CommandQueue & command_queue);
+    void workerThreadFunction(tpool::CommandQueue & command_queue);
 }
 
 namespace tpool
@@ -25,7 +25,7 @@ Worker::~Worker()
 ////////////////////////////////////////////////////////////////////////////////
 void Worker::start(CommandQueue & command_queue)
 {
-    mThread = std::thread(&worker_thread_function, std::ref(command_queue));
+    mThread = std::thread(&workerThreadFunction, std::ref(command_queue));
 }
 ////////////////////////////////////////////////////////////////////////////////
 }
@@ -33,7 +33,7 @@ void Worker::start(CommandQueue & command_queue)
 namespace
 {
 ////////////////////////////////////////////////////////////////////////////////
-void worker_thread_function(tpool::CommandQueue & command_queue)
+void workerThreadFunction(tpool::CommandQueue & command_queue)
 {
     while (true)
     {
