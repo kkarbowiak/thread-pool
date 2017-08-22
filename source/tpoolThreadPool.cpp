@@ -6,34 +6,21 @@
 
 #include <utility> // std::move()
 #include <exception> // std::exception
-#include <condition_variable>
+#include <functional>
+#include <future>
+#include <atomic>
 
 
 namespace
 {
-    class semaphore
-    {
-        public:
-            semaphore();
-
-            void acquire();
-            void release();
-
-        private:
-            std::size_t mCount;
-            std::mutex mMutex;
-            std::condition_variable mCondVar;
-    };
-
     class WaitJob : public tpool::Job
     {
         public:
-            WaitJob(semaphore & worker_wait, semaphore & tpool_wait);
+            explicit WaitJob(std::function<void ()> function);
             void execute() override;
 
         private:
-            semaphore & mWorkerWait;
-            semaphore & mTpoolWait;
+            std::function<void ()> mFunction;
     };
 }
 
@@ -86,30 +73,41 @@ void ThreadPool::clearPendingJobs()
 ////////////////////////////////////////////////////////////////////////////////
 void ThreadPool::waitUntilJobsCompleted()
 {
-    semaphore worker_wait;
-    semaphore tpool_wait;
+    std::promise<void> workers_promise1;
+    std::promise<void> workers_promise2;
+    std::promise<void> tpool_promise;
+    std::shared_future<void> tpool_future = tpool_promise.get_future().share();
+    std::atomic_size_t counter(0);
+    std::size_t const total_count = mWorkersNumber;
+
+    auto synchro = [&]
+    {
+        counter.fetch_add(1);
+        if (counter.load() == total_count)
+        {
+            workers_promise1.set_value();
+        }
+
+        tpool_future.wait();
+
+        counter.fetch_add(1);
+        if (counter.load() == total_count)
+        {
+            workers_promise2.set_value();
+        }
+    };
 
     for (std::size_t i = 0; i < mWorkersNumber; ++i)
     {
-        Command job_command(std::unique_ptr<Job>(new WaitJob(worker_wait, tpool_wait)));
+        Command job_command(std::unique_ptr<Job>(new WaitJob(synchro)));
 
         mCommandQueue.addCommand(std::move(job_command));
     }
 
-    for (std::size_t i = 0; i < mWorkersNumber; ++i)
-    {
-        tpool_wait.acquire();
-    }
-
-    for (std::size_t i = 0; i < mWorkersNumber; ++i)
-    {
-        worker_wait.release();
-    }
-
-    for (std::size_t i = 0; i < mWorkersNumber; ++i)
-    {
-        tpool_wait.acquire();
-    }
+    workers_promise1.get_future().wait();
+    counter.store(0);
+    tpool_promise.set_value();
+    workers_promise2.get_future().wait();
 }
 ////////////////////////////////////////////////////////////////////////////////
 }
@@ -117,45 +115,14 @@ void ThreadPool::waitUntilJobsCompleted()
 namespace
 {
 ////////////////////////////////////////////////////////////////////////////////
-semaphore::semaphore()
-    : mCount(0)
-    , mMutex()
-    , mCondVar()
-{
-}
-////////////////////////////////////////////////////////////////////////////////
-void semaphore::acquire()
-{
-    std::unique_lock<std::mutex> lock(mMutex);
-
-    while (mCount == 0)
-    {
-        mCondVar.wait(lock);
-    }
-
-    --mCount;
-}
-////////////////////////////////////////////////////////////////////////////////
-void semaphore::release()
-{
-    std::unique_lock<std::mutex> lock(mMutex);
-
-    ++mCount;
-
-    mCondVar.notify_one();
-}
-////////////////////////////////////////////////////////////////////////////////
-WaitJob::WaitJob(semaphore & worker_wait, semaphore & tpool_wait)
-    : mWorkerWait(worker_wait)
-    , mTpoolWait(tpool_wait)
+WaitJob::WaitJob(std::function<void ()> function)
+    : mFunction(function)
 {
 }
 ////////////////////////////////////////////////////////////////////////////////
 void WaitJob::execute()
 {
-    mTpoolWait.release();
-    mWorkerWait.acquire();
-    mTpoolWait.release();
+    mFunction();
 }
 ////////////////////////////////////////////////////////////////////////////////
 }
