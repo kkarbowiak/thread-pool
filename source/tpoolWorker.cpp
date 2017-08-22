@@ -1,15 +1,13 @@
 #include "tpoolWorker.h"
 
-#include "tpoolCommandQueue.h"
-#include "tpoolCommand.h"
-#include "tpoolJob.h"
+#include "tpoolJobQueue.h"
 
 #include <functional> // std::ref()
 
 
 namespace
 {
-    void workerThreadFunction(tpool::CommandQueue & command_queue);
+    void workerThreadFunction(tpool::JobQueue & job_queue);
 }
 
 namespace tpool
@@ -23,9 +21,9 @@ Worker::~Worker()
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
-void Worker::start(CommandQueue & command_queue)
+void Worker::start(JobQueue & job_queue)
 {
-    mThread = std::thread(&workerThreadFunction, std::ref(command_queue));
+    mThread = std::thread(&workerThreadFunction, std::ref(job_queue));
 }
 ////////////////////////////////////////////////////////////////////////////////
 }
@@ -33,14 +31,14 @@ void Worker::start(CommandQueue & command_queue)
 namespace
 {
 ////////////////////////////////////////////////////////////////////////////////
-void workerThreadFunction(tpool::CommandQueue & command_queue)
+void workerThreadFunction(tpool::JobQueue & job_queue)
 {
     while (true)
     {
-        tpool::Command command = command_queue.getCommand();
-        if (command.getType() == tpool::Command::JOB_EXECUTION)
+        std::function<void ()> job = job_queue.getJob();
+        if (job)
         {
-            command.getJob()->execute();
+            job();
         }
         else
         {

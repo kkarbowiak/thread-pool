@@ -1,15 +1,15 @@
 #ifndef TPOOL_THREAD_POOL_H
 #define TPOOL_THREAD_POOL_H
 
-#include "tpoolCommandQueue.h"
+#include "tpoolJobQueue.h"
 
+#include <functional> // std::function
 #include <memory> // std::unique_ptr
 #include <cstddef> // std::size_t
 
 
 namespace tpool
 {
-    class Job;
     class Worker;
 }
 
@@ -21,7 +21,7 @@ namespace tpool
             explicit ThreadPool(std::size_t num_workers);
             ~ThreadPool();
 
-            void addJob(std::unique_ptr<Job> job);
+            void addJob(std::function<void ()> job);
 
             void clearPendingJobs();
             void waitUntilJobsCompleted();
@@ -31,7 +31,7 @@ namespace tpool
             ThreadPool & operator=(ThreadPool const &) = delete;
 
         private:
-            CommandQueue mCommandQueue;
+            JobQueue mJobQueue;
             std::unique_ptr<Worker[]> mWorkers;
             std::size_t mWorkersNumber;
     };

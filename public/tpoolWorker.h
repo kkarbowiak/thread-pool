@@ -4,7 +4,7 @@
 #include <thread>
 
 
-namespace tpool { class CommandQueue; }
+namespace tpool { class JobQueue; }
 
 namespace tpool
 {
@@ -13,7 +13,7 @@ namespace tpool
         public:
             ~Worker();
 
-            void start(CommandQueue & command_queue);
+            void start(JobQueue & job_queue);
 
         private:
             std::thread mThread;

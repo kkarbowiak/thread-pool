@@ -1,20 +1,18 @@
-#include "tpoolCommandQueue.h"
-
-#include "tpoolCommand.h"
+#include "tpoolJobQueue.h"
 
 #include <utility> // std::move()
 
 
 namespace
 {
-    void discardFrontElement(std::list<tpool::Command> & commands, std::list<tpool::Command> & guaranteed, std::size_t guaranteed_capacity);
+    void discardFrontElement(std::list<std::function<void ()>> & jobs, std::list<std::function<void ()>> & guaranteed, std::size_t guaranteed_capacity);
 }
 
 namespace tpool
 {
 ////////////////////////////////////////////////////////////////////////////////
-CommandQueue::CommandQueue(std::size_t guaranteed_capacity)
-    : mCommands()
+JobQueue::JobQueue(std::size_t guaranteed_capacity)
+    : mJobs()
     , mGuaranteed()
     , mGuaranteedCapacity(guaranteed_capacity)
     , mMutex()
@@ -22,52 +20,52 @@ CommandQueue::CommandQueue(std::size_t guaranteed_capacity)
 {
     for (std::size_t i = 0; i < guaranteed_capacity; ++i)
     {
-        mGuaranteed.push_back(Command());
+        mGuaranteed.push_back(std::function<void ()>());
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
-void CommandQueue::addCommand(Command command)
+void JobQueue::addJob(std::function<void ()> job)
 {
     std::unique_lock<std::mutex> lock(mMutex);
 
-    mCommands.push_back(std::move(command));
+    mJobs.push_back(std::move(job));
 
     mCondVar.notify_one();
 }
 ////////////////////////////////////////////////////////////////////////////////
-void CommandQueue::addCommandGuaranteed(Command command)
+void JobQueue::addJobGuaranteed(std::function<void ()> job)
 {
     std::unique_lock<std::mutex> lock(mMutex);
 
     auto it = mGuaranteed.begin();
-    *it = std::move(command);
-    mCommands.splice(mCommands.end(), mGuaranteed, it);
+    *it = std::move(job);
+    mJobs.splice(mJobs.end(), mGuaranteed, it);
 
     mCondVar.notify_one();
 }
 ////////////////////////////////////////////////////////////////////////////////
-Command CommandQueue::getCommand()
+std::function<void ()> JobQueue::getJob()
 {
     std::unique_lock<std::mutex> lock(mMutex);
 
-    while (mCommands.empty())
+    while (mJobs.empty())
     {
         mCondVar.wait(lock);
     }
 
-    Command command = std::move(mCommands.front());
-    discardFrontElement(mCommands, mGuaranteed, mGuaranteedCapacity);
+    std::function<void ()> job = std::move(mJobs.front());
+    discardFrontElement(mJobs, mGuaranteed, mGuaranteedCapacity);
 
-    return command;
+    return job;
 }
 ////////////////////////////////////////////////////////////////////////////////
-void CommandQueue::clear()
+void JobQueue::clear()
 {
     std::unique_lock<std::mutex> lock(mMutex);
 
-    while (!mCommands.empty())
+    while (!mJobs.empty())
     {
-        discardFrontElement(mCommands, mGuaranteed, mGuaranteedCapacity);
+        discardFrontElement(mJobs, mGuaranteed, mGuaranteedCapacity);
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
@@ -76,16 +74,16 @@ void CommandQueue::clear()
 namespace
 {
 ////////////////////////////////////////////////////////////////////////////////
-void discardFrontElement(std::list<tpool::Command> & commands, std::list<tpool::Command> & guaranteed, std::size_t guaranteed_capacity)
+void discardFrontElement(std::list<std::function<void ()>> & jobs, std::list<std::function<void ()>> & guaranteed, std::size_t guaranteed_capacity)
 {
     if (guaranteed.size() < guaranteed_capacity)
     {
-        auto it = commands.begin();
-        guaranteed.splice(guaranteed.end(), commands, it);
+        auto it = jobs.begin();
+        guaranteed.splice(guaranteed.end(), jobs, it);
     }
     else
     {
-        commands.pop_front();
+        jobs.pop_front();
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
