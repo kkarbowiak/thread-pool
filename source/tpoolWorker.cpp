@@ -20,7 +20,7 @@ void Worker::start(JobQueue & job_queue)
     {
         while (true)
         {
-            std::function<void ()> job = job_queue.getJob();
+            job_type job = job_queue.getJob();
             if (job)
             {
                 job();

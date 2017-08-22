@@ -1,9 +1,9 @@
 #ifndef TPOOL_THREAD_POOL_H
 #define TPOOL_THREAD_POOL_H
 
+#include "tpoolJobType.h"
 #include "tpoolJobQueue.h"
 
-#include <functional> // std::function
 #include <memory> // std::unique_ptr
 #include <cstddef> // std::size_t
 
@@ -21,7 +21,7 @@ namespace tpool
             explicit ThreadPool(std::size_t num_workers);
             ~ThreadPool();
 
-            void addJob(std::function<void ()> job);
+            void addJob(job_type job);
 
             void clearPendingJobs();
             void waitUntilJobsCompleted();

@@ -43,7 +43,7 @@ ThreadPool::~ThreadPool()
     stopThreads(mWorkersNumber, mJobQueue);
 }
 ////////////////////////////////////////////////////////////////////////////////
-void ThreadPool::addJob(std::function<void ()> job)
+void ThreadPool::addJob(job_type job)
 {
     mJobQueue.addJob(std::move(job));
 }
@@ -98,7 +98,7 @@ void stopThreads(std::size_t num_threads, tpool::JobQueue & job_queue)
 {
     for (std::size_t i = 0; i < num_threads; ++i)
     {
-        job_queue.addJobGuaranteed(std::function<void ()>());
+        job_queue.addJobGuaranteed(tpool::job_type());
     }
 }
 ////////////////////////////////////////////////////////////////////////////////

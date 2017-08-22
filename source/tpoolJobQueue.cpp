@@ -5,7 +5,7 @@
 
 namespace
 {
-    void discardFrontElement(std::list<std::function<void ()>> & jobs, std::list<std::function<void ()>> & guaranteed, std::size_t guaranteed_capacity);
+    void discardFrontElement(std::list<tpool::job_type> & jobs, std::list<tpool::job_type> & guaranteed, std::size_t guaranteed_capacity);
 }
 
 namespace tpool
@@ -20,11 +20,11 @@ JobQueue::JobQueue(std::size_t guaranteed_capacity)
 {
     for (std::size_t i = 0; i < guaranteed_capacity; ++i)
     {
-        mGuaranteed.push_back(std::function<void ()>());
+        mGuaranteed.push_back(job_type());
     }
 }
 ////////////////////////////////////////////////////////////////////////////////
-void JobQueue::addJob(std::function<void ()> job)
+void JobQueue::addJob(job_type job)
 {
     std::unique_lock<std::mutex> lock(mMutex);
 
@@ -33,7 +33,7 @@ void JobQueue::addJob(std::function<void ()> job)
     mCondVar.notify_one();
 }
 ////////////////////////////////////////////////////////////////////////////////
-void JobQueue::addJobGuaranteed(std::function<void ()> job)
+void JobQueue::addJobGuaranteed(job_type job)
 {
     std::unique_lock<std::mutex> lock(mMutex);
 
@@ -53,7 +53,7 @@ std::function<void ()> JobQueue::getJob()
         mCondVar.wait(lock);
     }
 
-    std::function<void ()> job = std::move(mJobs.front());
+    job_type job = std::move(mJobs.front());
     discardFrontElement(mJobs, mGuaranteed, mGuaranteedCapacity);
 
     return job;
@@ -74,7 +74,7 @@ void JobQueue::clear()
 namespace
 {
 ////////////////////////////////////////////////////////////////////////////////
-void discardFrontElement(std::list<std::function<void ()>> & jobs, std::list<std::function<void ()>> & guaranteed, std::size_t guaranteed_capacity)
+void discardFrontElement(std::list<tpool::job_type> & jobs, std::list<tpool::job_type> & guaranteed, std::size_t guaranteed_capacity)
 {
     if (guaranteed.size() < guaranteed_capacity)
     {

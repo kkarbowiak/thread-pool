@@ -1,7 +1,8 @@
 #ifndef TPOOL_JOB_QUEUE_H
 #define TPOOL_JOB_QUEUE_H
 
-#include <functional> // std::function
+#include "tpoolJobType.h"
+
 #include <list>
 #include <mutex>
 #include <condition_variable>
@@ -15,16 +16,16 @@ namespace tpool
         public:
             explicit JobQueue(std::size_t guaranteed_capacity);
 
-            void addJob(std::function<void ()> job);
-            void addJobGuaranteed(std::function<void ()> job);
+            void addJob(job_type job);
+            void addJobGuaranteed(job_type job);
 
-            std::function<void ()> getJob();
+            job_type getJob();
 
             void clear();
 
         private:
-            std::list<std::function<void ()>> mJobs;
-            std::list<std::function<void ()>> mGuaranteed;
+            std::list<job_type> mJobs;
+            std::list<job_type> mGuaranteed;
             std::size_t mGuaranteedCapacity;
             std::mutex mMutex;
             std::condition_variable mCondVar;
