@@ -2,13 +2,6 @@
 
 #include "tpoolJobQueue.h"
 
-#include <functional> // std::ref()
-
-
-namespace
-{
-    void workerThreadFunction(tpool::JobQueue & job_queue);
-}
 
 namespace tpool
 {
@@ -23,28 +16,23 @@ Worker::~Worker()
 ////////////////////////////////////////////////////////////////////////////////
 void Worker::start(JobQueue & job_queue)
 {
-    mThread = std::thread(&workerThreadFunction, std::ref(job_queue));
-}
-////////////////////////////////////////////////////////////////////////////////
-}
-
-namespace
-{
-////////////////////////////////////////////////////////////////////////////////
-void workerThreadFunction(tpool::JobQueue & job_queue)
-{
-    while (true)
+    auto thread_function = [&job_queue]
     {
-        std::function<void ()> job = job_queue.getJob();
-        if (job)
+        while (true)
         {
-            job();
+            std::function<void ()> job = job_queue.getJob();
+            if (job)
+            {
+                job();
+            }
+            else
+            {
+                break;
+            }
         }
-        else
-        {
-            break;
-        }
-    }
+    };
+
+    mThread = std::thread(thread_function);
 }
 ////////////////////////////////////////////////////////////////////////////////
 }
