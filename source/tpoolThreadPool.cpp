@@ -60,12 +60,11 @@ void ThreadPool::waitUntilJobsCompleted()
     std::promise<void> tpool_promise;
     std::shared_future<void> tpool_future = tpool_promise.get_future().share();
     std::atomic_size_t counter(0);
-    std::size_t const total_count = mWorkersNumber;
 
     auto synchro = [&]
     {
         counter.fetch_add(1);
-        if (counter.load() == total_count)
+        if (counter.load() == mWorkersNumber)
         {
             workers_promise1.set_value();
         }
@@ -73,7 +72,7 @@ void ThreadPool::waitUntilJobsCompleted()
         tpool_future.wait();
 
         counter.fetch_add(1);
-        if (counter.load() == total_count)
+        if (counter.load() == mWorkersNumber)
         {
             workers_promise2.set_value();
         }
