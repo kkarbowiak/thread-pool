@@ -6,6 +6,7 @@
 #include <exception> // std::exception
 #include <future>
 #include <atomic>
+#include <cassert>
 
 
 namespace
@@ -45,6 +46,8 @@ ThreadPool::~ThreadPool()
 ////////////////////////////////////////////////////////////////////////////////
 void ThreadPool::addJob(job_type job)
 {
+    assert(job);
+
     mJobQueue.addJob(std::move(job));
 }
 ////////////////////////////////////////////////////////////////////////////////
