@@ -44,7 +44,7 @@ void JobQueue::addJobGuaranteed(job_type job)
     mCondVar.notify_one();
 }
 ////////////////////////////////////////////////////////////////////////////////
-std::function<void ()> JobQueue::getJob()
+job_type JobQueue::getJob()
 {
     std::unique_lock<std::mutex> lock(mMutex);
 
