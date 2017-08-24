@@ -58,27 +58,20 @@ void ThreadPool::clearPendingJobs()
 ////////////////////////////////////////////////////////////////////////////////
 void ThreadPool::waitUntilJobsCompleted()
 {
-    std::promise<void> workers_promise1;
-    std::promise<void> workers_promise2;
+    std::promise<void> workers_promise;
     std::promise<void> tpool_promise;
     std::shared_future<void> tpool_future = tpool_promise.get_future().share();
     std::atomic_size_t counter(0);
 
-    auto synchro = [&]
+    auto synchro = [&, tpool_future]
     {
         counter.fetch_add(1);
         if (counter.load() == mWorkersNumber)
         {
-            workers_promise1.set_value();
+            workers_promise.set_value();
         }
 
         tpool_future.wait();
-
-        counter.fetch_add(1);
-        if (counter.load() == mWorkersNumber)
-        {
-            workers_promise2.set_value();
-        }
     };
 
     for (std::size_t i = 0; i < mWorkersNumber; ++i)
@@ -86,10 +79,8 @@ void ThreadPool::waitUntilJobsCompleted()
         mJobQueue.addJob(synchro);
     }
 
-    workers_promise1.get_future().wait();
-    counter.store(0);
+    workers_promise.get_future().wait();
     tpool_promise.set_value();
-    workers_promise2.get_future().wait();
 }
 ////////////////////////////////////////////////////////////////////////////////
 }
