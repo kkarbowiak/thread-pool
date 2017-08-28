@@ -65,8 +65,7 @@ void ThreadPool::waitUntilJobsCompleted()
 
     auto synchro = [&, tpool_future]
     {
-        counter.fetch_add(1);
-        if (counter.load() == mWorkersNumber)
+        if (counter.fetch_add(1) == mWorkersNumber - 1)
         {
             workers_promise.set_value();
         }
