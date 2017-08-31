@@ -26,7 +26,6 @@ namespace tpool
             void clearPendingJobs();
             void waitUntilJobsCompleted();
 
-        private:
             ThreadPool(ThreadPool const &) = delete;
             ThreadPool & operator=(ThreadPool const &) = delete;
 
