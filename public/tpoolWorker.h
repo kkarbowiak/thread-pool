@@ -1,3 +1,7 @@
+/*
+    Copyright 2017 Krzysztof Karbowiak
+*/
+
 #ifndef TPOOL_WORKER_H
 #define TPOOL_WORKER_H
 

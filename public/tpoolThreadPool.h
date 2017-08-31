@@ -1,3 +1,7 @@
+/*
+    Copyright 2017 Krzysztof Karbowiak
+*/
+
 #ifndef TPOOL_THREAD_POOL_H
 #define TPOOL_THREAD_POOL_H
 

@@ -1,3 +1,7 @@
+/*
+    Copyright 2017 Krzysztof Karbowiak
+*/
+
 #ifndef TPOOL_JOB_QUEUE_H
 #define TPOOL_JOB_QUEUE_H
 

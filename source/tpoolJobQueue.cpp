@@ -1,3 +1,7 @@
+/*
+    Copyright 2017 Krzysztof Karbowiak
+*/
+
 #include "tpoolJobQueue.h"
 
 #include <utility> // std::move()

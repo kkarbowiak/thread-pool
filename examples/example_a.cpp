@@ -1,3 +1,7 @@
+/*
+    Copyright 2017 Krzysztof Karbowiak
+*/
+
 #include "tpoolThreadPool.h"
 
 #include <iostream>
